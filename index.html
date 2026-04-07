@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClipMaker | AI Viral Moments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://upload-widget.cloudinary.com/latest/global/all.js" type="text/javascript"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --accent: #8b5cf6;
+            --accent-dark: #7c3aed;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: var(--bg);
+            color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .video-glow {
+            box-shadow: 0 0 80px -20px rgba(139, 92, 246, 0.15);
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.05) 50%,
+                    rgba(255, 255, 255, 0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .upload-btn {
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px -8px rgba(139, 92, 246, 0.5);
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+    <!-- Floating Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-600/10 blur-3xl rounded-full floating"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-40 h-40 bg-indigo-600/10 blur-3xl rounded-full floating" style="animation-delay: -3s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-24 h-24 bg-pink-600/10 blur-3xl rounded-full floating" style="animation-delay: -1.5s;"></div>
+    </div>
+
+    <main class="relative min-h-screen flex flex-col items-center justify-center px-6">
+        <!-- Header -->
+        <header class="absolute top-8 w-full flex justify-center opacity-0 nav-el">
+            <div class="flex items-center space-x-3 title-el">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-900/30">
+                    <i data-lucide="sparkles" class="w-6 h-6 text-white fill-current"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">ClipMaker</span>
+            </div>
+        </header>
+
+        <div class="w-full max-w-5xl flex flex-col lg:flex-row items-center gap-12 mt-20">
+            <!-- Left Side: Description -->
+            <div class="flex-1 text-center lg:text-left opacity-0 desc-el">
+                <h1 class="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    Crie Momentos Virais com IA
+                </h1>
+                <p class="text-lg text-gray-400 mb-8 leading-relaxed">
+                    Faça upload do seu vídeo e deixe nossa IA encontrar o momento perfeito para viralizar. Rápido, inteligente e automático.
+                </p>
+            </div>
+
+            <!-- Right Side: Interface -->
+            <div class="flex-1 w-full max-w-md opacity-0 interface-el">
+                <!-- API Key Input -->
+                <div class="w-full relative group mb-6">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl opacity-25 group-hover:opacity-50 transition duration-500 blur"></div>
+                    <div class="relative flex items-center glass rounded-xl border border-purple-800/20 p-1">
+                        <div class="pl-4 pr-2">
+                            <i data-lucide="key" class="w-5 h-5 text-purple-400"></i>
+                        </div>
+                        <input id="apiKey" type="password"
+                            class="w-full bg-transparent text-gray-200 placeholder-gray-500 px-2 py-4 focus:outline-none text-base"
+                            placeholder="Sua chave Gemini API..." />
+                    </div>
+                </div>
+
+                <button id="upload_widget"
+                    class="upload-btn group relative flex items-center justify-center space-x-3 w-full px-8 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl font-bold text-lg hover:from-purple-500 hover:to-indigo-500 transition-all">
+                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                    <span>Iniciar Upload</span>
+                </button>
+
+                <!-- Status Display -->
+                <div id="status" class="mt-6 text-center text-gray-400 font-medium"></div>
+
+                <!-- Loading State -->
+                <div id="loading" class="hidden mt-6 flex items-center justify-center space-x-3 text-purple-400 font-medium">
+                    <div class="w-3 h-3 bg-purple-500 rounded-full animate-ping"></div>
+                    <span>Processando vídeo...</span>
+                </div>
+
+                <!-- Error Display -->
+                <div id="error" class="hidden mt-6 p-4 glass border border-red-500/20 rounded-xl text-red-400 text-center">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 mx-auto mb-2"></i>
+                    <span id="error-message">Erro ao processar</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Section -->
+        <div class="w-full max-w-4xl mt-16 opacity-0 video-el">
+            <div class="glass video-glow rounded-3xl p-2 aspect-video relative group overflow-hidden">
+                <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-600 transition-all duration-700">
+                    <div class="shimmer absolute inset-0 opacity-20"></div>
+                    <i data-lucide="film" class="w-20 h-20 mb-4 stroke-[0.5px] opacity-30"></i>
+                    <p class="text-sm font-medium uppercase tracking-widest">Pronto para o Vídeo</p>
+                </div>
+                <video id="video" src="" class="hidden w-full h-full object-cover rounded-2xl shadow-2xl relative z-10" controls></video>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // GSAP Intro Animation
+        window.addEventListener("load", () => {
+            const tl = gsap.timeline({ defaults: { ease: "expo.out", duration: 1.5 } });
+            tl.to(".nav-el", { opacity: 1, y: 0 })
+              .to(".title-el", { opacity: 1, y: -10 }, "-=1.2")
+              .to(".desc-el", { opacity: 1, x: 0 }, "-=1.3")
+              .to(".interface-el", { opacity: 1, x: 0 }, "-=1.3")
+              .to(".video-el", { opacity: 1, scale: 1, y: 0 }, "-=1.3");
+        });
+
+        // Elements
+        const el = {
+            video: document.getElementById('video'),
+            status: document.getElementById('status'),
+            apiKey: document.getElementById('apiKey'),
+            button: document.getElementById('upload_widget'),
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            errorMessage: document.getElementById('error-message'),
+            placeholder: document.getElementById('placeholder')
+        };
+
+        // App Configuration
+        const app = {
+            transcriptionURL: '',
+            public_id: '',
+            version: '',
+            cloudName: 'dhgdmbhtj',
+            uploadPreset: 'upload_video',
+            waitForTranscription: async () => {
+                const maxAttempts = 30;
+                const delay = 2000;
+
+                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    const url = `https://res.cloudinary.com/${app.cloudName}/raw/upload/v${Date.now()}/${app.public_id}.transcript`;
+                    
+                    try {
+                        console.log(`Tentativa ${attempt}/${maxAttempts}: Verificando transcrição...`);
+                        const response = await fetch(url);
+                        
+                        if (response.ok) {
+                            app.transcriptionURL = url;
+                            console.log('Transcrição encontrada!', url);
+                            return true;
+                        }
+                    } catch (error) {
+                        console.log(`Tentativa ${attempt} falhou:`, error.message); 
+                    }
+                    
+                    if (attempt < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+
+                console.log('Transcrição não encontrada após todas as tentativas.');
+                return false;
+            },
+            getTranscription: async () => {
+                const response = await fetch(app.transcriptionURL);
+                return response.text();
+            },
+            getViralMoment: async () => {
+                const transcription = await app.getTranscription();
+                const model = 'gemini-2.5-flash';
+                const apiKey = el.apiKey.value;
+                if (!apiKey) throw new Error("API Key é obrigatória");
+
+                const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+                const prompt = `
+Role: You are a professional video editor specializing in viral content.
+Task: Analyze the transcription below and identify the most engaging, funny, or surprising segment.
+Constraints:
+1. Duration: Minimum 30 seconds, Maximum 60 seconds.
+2. Format: Return ONLY the start and end string for Cloudinary. Format: so_<start_seconds>,eo_<end_seconds>
+3. Examples: "so_10,eo_20" or "so_12.5,eo_45.2"
+4. CRITICAL: Do not use markdown, do not use quotes, do not explain. Return ONLY the raw string.
+
+Transcription:
+${transcription}
+`;
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                const contents = [
+                    {
+                        parts: [
+                            {
+                                text: prompt
+                            }
+                        ]
+                    }
+                ];
+
+                const response = await fetch(geminiEndpoint, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ contents })
+                });
+
+                if (!response.ok) {
+                    const bodyText = await response.text().catch(() => '');
+                    throw new Error(`Gemini request failed: ${response.status} ${response.statusText} ${bodyText}`);
+                }
+
+                const data = await response.json();
+                const rawText = data.candidates[0].content.parts[0].text;
+                return rawText.replace(/```/g, '').replace(/json/g, '').trim();
+            }
+        };
+
+        // Cloudinary Widget
+        const myWidget = cloudinary.createUploadWidget(
+            {
+                cloudName: app.cloudName,
+                uploadPreset: app.uploadPreset,
+                theme: 'minimal',
+                styles: {
+                    palette: {
+                        window: "#0F172A",
+                        sourceList: "#0F172A",
+                        activeTab: "#8B5CF6",
+                        action: "#8B5CF6",
+                        inactiveTabIcon: "#64748B",
+                        menuIcons: "#64748B",
+                        link: "#A855F7",
+                        textDark: "#000000",
+                        textLight: "#FFFFFF",
+                        mainShadow: "#000000",
+                        background: "#0A0A0A",
+                    },
+                },
+            },
+            async (error, result) => { 
+                if (!error && result && result.event === "success") { 
+                    console.log('Done! Here is the image info: ', result.info); 
+                    app.public_id = result.info.public_id;
+                    
+                    try {
+                        el.loading.classList.remove("hidden");
+                        el.status.textContent = "Aguardando transcrição...";
+                        el.error.classList.add("hidden");
+
+                        const isReady = await app.waitForTranscription();
+                        if (!isReady) {
+                            throw new Error('Transcrição não encontrada');
+                        }
+
+                        el.status.textContent = "Gerando momento viral...";
+
+                        const viralMoment = await app.getViralMoment();
+                        const viralMomentURL = `https://res.cloudinary.com/${app.cloudName}/video/upload/${viralMoment}/${app.public_id}.mp4`;
+                        
+                        el.video.setAttribute('src', viralMomentURL);
+                        el.video.classList.remove("hidden");
+                        el.placeholder.classList.add("opacity-0");
+
+                        gsap.from(el.video, {
+                            opacity: 0,
+                            scale: 0.98,
+                            filter: "blur(10px)",
+                            duration: 1,
+                        });
+                    } catch(error) {
+                        el.errorMessage.textContent = error.message || 'Erro ao processar vídeo';
+                        el.error.classList.remove("hidden");
+                    } finally {
+                        el.loading.classList.add("hidden");
+                        el.status.textContent = "";
+                    }
+                }
+            }
+        );
+
+        el.button.addEventListener('click', () => {
+            if (!el.apiKey.value) {
+                el.status.textContent = "Por favor, insira a chave de API do Gemini.";
+                el.apiKey.focus();
+                return;
+            }
+            myWidget.open();
+        }, false);
+    </script>
+</body>
+</html>
