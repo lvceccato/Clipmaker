@@ -4,8 +4,7 @@
 
 **Desenvolvedor em evolução**
 
-[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/gmatte-dev)
-
+[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/lvceccato)
 ## 📌 Sobre este repositório
 
 Este repositório reúne os **certificados e formações** que compõem minha trajetória de desenvolvimento.
